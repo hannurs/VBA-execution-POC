@@ -8,9 +8,8 @@ import shutil
 from azure.storage.blob import BlobServiceClient
 import time
 from typing import List
-import traceback
 
-CONNECTION_STRING = "blob_storage_connection_string"
+CONNECTION_STRING = "blob_connection_string"
 
 def ListVBAMacros(input_file: str):
     """List all VBA macros (Subroutines/Functions) in the Excel workbook"""
@@ -156,7 +155,7 @@ def EnsureDispatchEx(clsid, new_instance=True):
             del sys.modules[i]
         return gencache.EnsureDispatch(clsid)
 
-def Run(input_file: str, output_file: str, vba_script: str):
+def Run(input_file: str, output_file: str, vba_script: str, param: str = None):
     """Function to run a Excel spreadsheet, execute a VBA script and save the output
     """
     xl = EnsureDispatchEx("Excel.Application") 
@@ -164,7 +163,7 @@ def Run(input_file: str, output_file: str, vba_script: str):
     # Without using the custom function above
 
     wb = xl.Workbooks.Open(input_file, ReadOnly=1)
-    xl.Run(vba_script)
+    xl.Run(vba_script, param)
     if os.path.exists(output_file):
         os.remove(output_file)
     wb.SaveAs(output_file)
@@ -184,7 +183,8 @@ def DownloadBlobsFromContainer(
 
 def ExecuteVBAs(
         input_dir_name: str,
-        output_dir_name: str
+        output_dir_name: str,
+        param: str = None
         ) -> None:
     input_dir_path = os.path.join(os.getcwd(), input_dir_name)
     os.mkdir(os.path.join(os.getcwd(), output_dir_name))
@@ -196,7 +196,7 @@ def ExecuteVBAs(
         print("Processing", input_file, "file")
         macros = ListVBAMacros(full_input_path)
         for macro in macros:
-            Run(full_input_path, full_output_path, input_file + "!" + macro)
+            Run(full_input_path, full_output_path, input_file + "!" + macro, param=param)
     return
 
 
@@ -238,7 +238,7 @@ def main():
         ExecuteVBAs(input_dir_name=input_container_name, output_dir_name=output_container_name)
         UploadBlobsToContainer(container_name=output_container_name)
         ClearLocalFolders([input_container_name, output_container_name])
-        time.sleep(10)
+        time.sleep(5)
 
     return 1
 
