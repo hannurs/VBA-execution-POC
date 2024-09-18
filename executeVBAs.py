@@ -163,7 +163,10 @@ def Run(input_file: str, output_file: str, vba_script: str, param: str = None):
     # Without using the custom function above
 
     wb = xl.Workbooks.Open(input_file, ReadOnly=1)
-    xl.Run(vba_script, param)
+    if param:
+        xl.Run(vba_script, param)
+    else:
+        xl.Run(vba_script)
     if os.path.exists(output_file):
         os.remove(output_file)
     wb.SaveAs(output_file)
